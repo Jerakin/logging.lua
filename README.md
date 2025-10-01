@@ -26,6 +26,9 @@ logging.debug("Something went wrong")
 
 You set the level on the logging object.
 
+> [!NOTE]
+> The library uses both the `.` and `:` annotations. `logging.get_logger` and the logging methods (`.debug`, `.info`, etc) uses `.`. Every other method uses `:`.
+
 ```lua
 local logging = require "logging"
 
@@ -49,8 +52,6 @@ logger.debug("Something went wrong")
 -- As a parent logger has a higher level (INFO) than this child logger is using (DEBUG) this will not print anything.
 ````
 
-> [!NOTE]
-> The library uses both the `.` and `:` annotations. `logging.get_logger` and the logging methods (`.debug`, `.info`, etc) uses `.`. Every other method uses `:`.
 
 ## Handlers
 The library uses handlers to display/emit the log. By default a "`print_handler`" is added to the root logger. There is also a "`file_logger`" that you set up and use. You can also write your own handlers easily.
