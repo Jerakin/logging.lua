@@ -6,8 +6,9 @@
 ---@field msg string
 
 ---@class handler
----@field handle fun(record: record): nil
+---@field handle fun(self, record: record): nil
 ---@field name string
+---@field formatter fun(self, record: record): string
 
 ---@class logger
 ---@field debug fun(...): nil
@@ -15,6 +16,7 @@
 ---@field warning fun(...): nil
 ---@field error fun(...): nil
 ---@field critical fun(...): nil
+---@field propagate boolean If this logger should propegate to parent loggers
 ---@field set_level fun(name_or_level: number|string): nil
 ---@field get_level fun(): number
 ---@field add_handler fun(handler: handler): nil
@@ -57,8 +59,6 @@ local __level_to_name = {
 	[logging.ERROR] = "error",
 	[logging.CRITICAL] = "critical",
 }
-
-
 local __root
 local __loggers = {}
 
@@ -112,26 +112,30 @@ local function __set_logging_level(t, name_or_level)
 end
 
 
+local function __default_formatter(record)
+	local lineinfo = record.pathname .. ":" .. record.lineno
+	return string.format("[%s] [%s] %s: %s", __level_to_name[record.level]:upper(), record.name, lineinfo, record.msg)
+end
+
 local __print_handler = {
 	name = "print_handler",
-	handle = function(record)
-		local lineinfo = record.pathname .. ":" .. record.lineno
-		print(string.format("[%s] [%s] %s: %s", __level_to_name[record.level]:upper(), record.name, lineinfo, record.msg))
+	handle = function(self, record)
+		local formatter = self.formatter or __default_formatter
+		print(formatter(record))
 	end
 }
 
 
 -- Example file handler
-local __file_handler
-__file_handler = {
+local __file_handler = {
 	name = "file_handler",
 	_file_path = nil,
-	handle = function(record)
-		if __file_handler._file_path == nil then
+	handle = function(self, record)
+		if self._file_path == nil then
 			return
 		end
 		local lineinfo = record.pathname .. ":" .. record.lineno
-		local fp = io.open(__file_handler._file_path, "a")
+		local fp = io.open(self._file_path, "a")
 		local str = string.format("[%s] [%s] %s: %s", __level_to_name[record.level]:upper(), record.name, lineinfo, record.msg)
 		if fp ~= nil then
 			fp:write(str)
@@ -168,7 +172,7 @@ local function __new_logger(name, parent)
 			__loggers[logger.parent]._emit(record)
 		end
 		for _, handler in ipairs(logger._handlers) do
-			handler.handle(record)
+			handler:handle(record)
 		end
 	end
 
@@ -180,6 +184,8 @@ local function __new_logger(name, parent)
 	end
 
 	logger.add_handler = function(handler)
+		assert(handler.name ~= nil, "Handler name required")
+		assert(handler.handle ~= nil, "Handler requires a handle function")
 		table.insert(logger._handlers, handler)
 	end
 
