@@ -148,11 +148,11 @@ local function __new_logger(name, parent)
 	logger.parent = parent
 	logger._handlers = {
 	}
-	logger._make_record = function(message)
+	logger._make_record = function(message, log_level)
 		local info = debug.getinfo(3, "Sl")
 		local record = {
 			name = logger._name,
-			level = logger._level,
+			level = log_level,
 			pathname = info.short_src,
 			lineno = info.currentline,
 			msg=message
@@ -193,11 +193,11 @@ local function __new_logger(name, parent)
         return false
 	end
 
-	for log_name, level in pairs(__levels) do
+	for log_name, log_level in pairs(__levels) do
 		logger[log_name] = function(...)
 
 			local msg = __tostring(...)
-			local record = logger._make_record(msg)
+			local record = logger._make_record(msg, log_level)
 			logger._emit(record)
 		end
 	end
