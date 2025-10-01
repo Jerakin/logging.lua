@@ -31,7 +31,7 @@ local logging = require "logging"
 
 local logger = logging.get_logger("mymodule")
 
-logger.set_level(logging.INFO)
+logger:set_level(logging.INFO)
 
 logger.debug("Something went wrong")
 -- As debug is of a lower level than info, this will not print anything.
@@ -42,7 +42,7 @@ The library uses a hierarchical logging system. A logger will call its parent lo
 ```lua
 local logging = require "logging"
 
-logging.get_logger("lib.module").set_level(logging.INFO)
+logging.get_logger("lib.module"):set_level(logging.INFO)
 
 local logger = logging.get_logger("lib.module.file")
 

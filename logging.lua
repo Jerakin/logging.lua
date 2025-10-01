@@ -6,9 +6,9 @@
 ---@field msg string
 
 ---@class handler
----@field handle fun(self, record: record): nil
+---@field handle fun(record: record): nil
 ---@field name string
----@field formatter fun(self, record: record): string
+---@field formatter fun(record: record): string
 
 ---@class logger
 ---@field debug fun(...): nil
@@ -144,72 +144,76 @@ local __file_handler = {
 	end
 }
 
-local function __new_logger(name, parent)
-	local logger = {}
-	logger._level = logging.DEBUG
-	logger.propagate = true
-	logger._name = name
-	logger.parent = parent
-	logger._handlers = {
+local __logger = {}
+__logger.__index = __logger
+
+function __logger.new(name, parent)
+	local self = setmetatable({}, __logger)
+	self._level = logging.DEBUG
+	self.propagate = true
+	self._name = name
+	self.parent = parent
+	self._handlers = {
 	}
-	logger._make_record = function(message, log_level)
-		local info = debug.getinfo(3, "Sl")
-		local record = {
-			name = logger._name,
-			level = log_level,
-			pathname = info.short_src,
-			lineno = info.currentline,
-			msg=message
-		}
-		return record
-	end
-
-	logger._emit = function(record)
-		if record.level < logger._level then
-			return
-		end
-		if logger.parent and logger.propagate then
-			__loggers[logger.parent]._emit(record)
-		end
-		for _, handler in ipairs(logger._handlers) do
-			handler:handle(record)
-		end
-	end
-
-	logger.set_level = function(name_or_level)
-		__set_logging_level(logger, name_or_level)
-	end
-	logger.get_level = function()
-		return logger["_level"]
-	end
-
-	logger.add_handler = function(handler)
-		assert(handler.name ~= nil, "Handler name required")
-		assert(handler.handle ~= nil, "Handler requires a handle function")
-		table.insert(logger._handlers, handler)
-	end
-
-	logger.remove_handler = function(name_)
-		for index, _handler in pairs(logger._handlers) do
-			if _handler.name == name_ then
-				table.remove(logger._handlers, index)
-				return true
-			end
-		end
-        return false
-	end
-
 	for log_name, log_level in pairs(__levels) do
-		logger[log_name] = function(...)
+		self[log_name] = function(...)
 
 			local msg = __tostring(...)
-			local record = logger._make_record(msg, log_level)
-			logger._emit(record)
+			local record = self:_make_record(msg, log_level)
+			self:_emit(record)
 		end
 	end
 
-	return logger
+	return self
 end
+function __logger:_make_record(message, log_level)
+	local info = debug.getinfo(3, "Sl")
+	local record = {
+		name = self._name,
+		level = log_level,
+		pathname = info.short_src,
+		lineno = info.currentline,
+		msg=message
+	}
+	return record
+end
+
+function __logger:_emit(record)
+	if record.level < self._level then
+		return
+	end
+	if self.parent and self.propagate then
+		__loggers[self.parent]:_emit(record)
+	end
+	for _, handler in ipairs(self._handlers) do
+		handler:handle(record)
+	end
+end
+
+function __logger:set_level(name_or_level)
+	__set_logging_level(self, name_or_level)
+end
+
+function __logger:get_level()
+	return self._level
+end
+
+function __logger:add_handler(handler)
+	assert(handler.name ~= nil, "Handler name required")
+	assert(handler.handle ~= nil, "Handler requires a handle function")
+	table.insert(self._handlers, handler)
+end
+
+function __logger:remove_handler(name_)
+	for index, _handler in pairs(self._handlers) do
+		if _handler.name == name_ then
+			table.remove(self._handlers, index)
+			return true
+		end
+	end
+	return false
+end
+
 
 local __parent_child_relasionship = {
 
@@ -250,25 +254,25 @@ end
 
 ---@param name string Name of the logger.
 function logging.get_logger(name)
-	local __logger = __loggers[name]
-	if __logger ~= nil then
-		return __logger
+	local logger = __loggers[name]
+	if logger ~= nil then
+		return logger
 	end
 
 	if name == nil or name == "" then
 		return __root
 	end
-	__loggers[name] = __new_logger(name, "root")
+	__loggers[name] = __logger.new(name, "root")
 	__update_child_parent_relasionship(name)
 	return __loggers[name]
 end
 
 
 -- Setup root logger
-__root = __new_logger("root")
+__root = __logger.new("root")
 __loggers["root"] = __root
 __root._level = logging.DEBUG
-__root.add_handler(__print_handler)
+__root:add_handler(__print_handler)
 setmetatable(logging, {__index = function(_, key)
 	return __root[key]
 end})
