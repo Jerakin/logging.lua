@@ -1,3 +1,14 @@
+---@class record
+---@field name string
+---@field level number
+---@field pathname string
+---@field lineno number
+---@field msg string
+
+---@class handler
+---@field handle fun(record: record): nil
+---@field name string
+
 ---@class logger
 ---@field debug fun(...): nil
 ---@field info fun(...): nil
@@ -6,6 +17,8 @@
 ---@field critical fun(...): nil
 ---@field set_level fun(name_or_level: number|string): nil
 ---@field get_level fun(): number
+---@field add_handler fun(handler: handler): nil
+---@field remove_handler fun(name: string): boolean
 
 ---@class logging_module: logger
 ---@field DEBUG number
@@ -13,7 +26,7 @@
 ---@field WARNING number
 ---@field ERROR number
 ---@field CRITICAL number
----@field get_logger fun(name: string): logger
+---@field get_logger fun(name?: string): logger
 
 
 ---@type logging_module
@@ -50,7 +63,6 @@ local __root
 local __loggers = {}
 
 local __lua_tostring = tostring
-local __lua_max = math.max
 local __lua_string_gmatch = string.gmatch
 local __lua_table_insert = table.insert
 local __lua_math_floor = math.floor
@@ -159,24 +171,26 @@ local function __new_logger(name, parent)
 			handler.handle(record)
 		end
 	end
-	
+
 	logger.set_level = function(name_or_level)
 		__set_logging_level(logger, name_or_level)
 	end
 	logger.get_level = function()
 		return logger["_level"]
 	end
-	logger.add_handler = function(handler) 
+
+	logger.add_handler = function(handler)
 		table.insert(logger._handlers, handler)
 	end
-	
-	logger.remove_handler = function(handler)
+
+	logger.remove_handler = function(name_)
 		for index, _handler in pairs(logger._handlers) do
-			if _handler == handler then
+			if _handler.name == name_ then
 				table.remove(logger._handlers, index)
-				return
+				return true
 			end
 		end
+        return false
 	end
 
 	for log_name, level in pairs(__levels) do
@@ -199,7 +213,7 @@ local function __update_child_parent_relasionship(name)
 	__parent_child_relasionship[name] = "root"
 	local name_hierarchy = __string_split(name, ".")
 
-	for i=#name_hierarchy, 1, -1 do
+	for _=#name_hierarchy, 1, -1 do
 		table.remove(name_hierarchy, #name_hierarchy)
 		local parent = table.concat(name_hierarchy, ".")
 		if __parent_child_relasionship[parent] then
@@ -209,7 +223,7 @@ local function __update_child_parent_relasionship(name)
 	end
 
 	local updated_relationships = {}
-	for child, parent in pairs(__parent_child_relasionship) do
+	for child, _ in pairs(__parent_child_relasionship) do
 		local child_split = __string_split(child, ".")
 		for i = #child_split, 1, -1 do
 			local child_ =  table.concat({unpack(child_split, 1, i)}, ".")
@@ -227,7 +241,7 @@ local function __update_child_parent_relasionship(name)
 	end
 end
 
----@param name: string Name of the logger.
+---@param name string Name of the logger.
 function logging.get_logger(name)
 	local __logger = __loggers[name]
 	if __logger ~= nil then
@@ -248,7 +262,8 @@ __root = __new_logger("root")
 __loggers["root"] = __root
 __root._level = logging.DEBUG
 __root.add_handler(__print_handler)
-setmetatable(logging, {__index = function(t, key)
+setmetatable(logging, {__index = function(_, key)
 	return __root[key]
 end})
+
 return logging
