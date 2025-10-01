@@ -8,7 +8,7 @@
 ---@class handler
 ---@field handle fun(record: record): nil
 ---@field name string
----@field formatter fun(record: record): string
+---@field formatter? fun(record: record): string
 
 ---@class logger
 ---@field debug fun(...): nil
@@ -22,13 +22,19 @@
 ---@field add_handler fun(handler: handler): nil
 ---@field remove_handler fun(name: string): boolean
 
----@class logging_module: logger
+---@class logging_module
 ---@field DEBUG number
 ---@field INFO number
 ---@field WARNING number
 ---@field ERROR number
 ---@field CRITICAL number
+---@field debug fun(...): nil
+---@field info fun(...): nil
+---@field warning fun(...): nil
+---@field error fun(...): nil
+---@field critical fun(...): nil
 ---@field get_logger fun(name?: string): logger
+---@field handlers table<string, handler> Predefined handlers 
 
 
 ---@type logging_module
@@ -36,6 +42,10 @@ local logging = {
 	__HOMEPAGE = 'https://github.com/Jerakin/logging.lua',
 	__DESCRIPTION = "Complex enough logging library." ,
 	__VERSION = '0.1.0',
+}
+
+logging.handlers = {
+
 }
 
 logging.DEBUG = 10
@@ -117,7 +127,11 @@ local function __default_formatter(record)
 	return string.format("[%s] [%s] %s: %s", __level_to_name[record.level]:upper(), record.name, lineinfo, record.msg)
 end
 
-local __print_handler = {
+
+----------------------------- Handlers --------------------------------------
+
+
+logging.handlers.print_handler = {
 	name = "print_handler",
 	handle = function(self, record)
 		local formatter = self.formatter or __default_formatter
@@ -127,16 +141,17 @@ local __print_handler = {
 
 
 -- Example file handler
-local __file_handler = {
+logging.handlers.file_handler = {
 	name = "file_handler",
-	_file_path = nil,
+	file_path = nil,
 	handle = function(self, record)
-		if self._file_path == nil then
+		if self.file_path == nil then
 			return
 		end
-		local lineinfo = record.pathname .. ":" .. record.lineno
-		local fp = io.open(self._file_path, "a")
-		local str = string.format("[%s] [%s] %s: %s", __level_to_name[record.level]:upper(), record.name, lineinfo, record.msg)
+
+		local formatter = self.formatter or __default_formatter
+		local fp = io.open(self.file_path, "a")
+		local str = formatter(record)
 		if fp ~= nil then
 			fp:write(str)
 			fp:close()
@@ -144,6 +159,9 @@ local __file_handler = {
 	end
 }
 
+
+
+------------------------------- Logger factory -------------------------------
 local __logger = {}
 __logger.__index = __logger
 
@@ -214,6 +232,7 @@ function __logger:remove_handler(name_)
 	return false
 end
 
+-------------------------- Child to Parent Cache ----------------------------
 
 local __parent_child_relasionship = {
 
@@ -252,7 +271,11 @@ local function __update_child_parent_relasionship(name)
 	end
 end
 
+
+------------------------------ Public Method --------------------------------
+
 ---@param name string Name of the logger.
+---@return logger
 function logging.get_logger(name)
 	local logger = __loggers[name]
 	if logger ~= nil then
@@ -268,13 +291,34 @@ function logging.get_logger(name)
 end
 
 
+function logging.debug(...)
+	__root.debug(...)
+end
+
+
+function logging.info(...)
+	__root.info(...)
+end
+
+
+function logging.warning(...)
+	__root.critical(...)
+end
+
+
+function logging.error(...)
+	__root.critical(...)
+end
+
+
+function logging.critical(...)
+	__root.critical(...)
+end
+
+
 -- Setup root logger
 __root = __logger.new("root")
 __loggers["root"] = __root
-__root._level = logging.DEBUG
-__root:add_handler(__print_handler)
-setmetatable(logging, {__index = function(_, key)
-	return __root[key]
-end})
+__root:add_handler(logging.handlers.print_handler)
 
 return logging
