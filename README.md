@@ -16,7 +16,7 @@ logger.debug("Something went wrong")
 -- [DEBUG] [mymodule] mymodule.lua:5: Something went wrong
 ````
 
-You can also use the root logger, however this is discourge. As that defeats the whole purpose of segmenting your logs into child loggers.
+You can also use the root logger, however this is discourge. As that defeats the whole purpose of segmenting your logs into child loggers. However, this does enable the module to be a drop in replacement for other logging libraries.
 ```lua
 local logging = require "logging"
 
