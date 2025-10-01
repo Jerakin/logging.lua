@@ -24,6 +24,8 @@ logging.debug("Something went wrong")
 -- [DEBUG] [root] mymodule.lua:3: Something went wrong
 ````
 
+### Setting log level.
+
 You set the level on the logging object.
 
 > [!NOTE]
@@ -40,7 +42,11 @@ logger.debug("Something went wrong")
 -- As debug is of a lower level than info, this will not print anything.
 ````
 
+### Hierarchical logging
+
 The library uses a hierarchical logging system. A logger will call its parent logger with the same record, while filtering it on the log level. In practice this means that you can use the parent logger to silence child loggers. This can be especially helpful if you have a particular noisy part of your code that you majority of the time want silenced.
+
+This would also enable you to set a higher level on the root logger effeciantly silencing all logs. Which could be useful when releasing.
 ```lua
 local logging = require "logging"
 
