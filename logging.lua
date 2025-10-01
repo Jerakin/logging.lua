@@ -219,6 +219,7 @@ local function __update_child_parent_relasionship(name)
 		if __parent_child_relasionship[parent] then
 			__parent_child_relasionship[name] = parent
 			__loggers[name].parent = parent
+			break
 		end
 	end
 
