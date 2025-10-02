@@ -84,7 +84,9 @@ logger.debug("Something went wrong")
 
 
 ## Handlers
-The library uses handlers to display/emit the log. By default a "`print_handler`" is added to the root logger. There is also a "`file_logger`" that you set up and use. You can also write your own handlers easily.
+The library uses handlers to display/emit the log. By default a "`io_handler`" is added to the root logger. 
+There is also a "`print_handler`" for when `io.stdout` isn't available and a "`file_logger`" that you can 
+set up by setting a file name. You can also write your own handlers easily.
 
 To use the file handler you can do something like this.
 ```lua
@@ -99,8 +101,8 @@ Remember, this is a hierarhical logging library. To fully benefit from the file 
 Any logger on a child would not be used with a parent. Meaning something like this
 ```lua
 local logging = require "logging"
-logging.get_logger().remove_logger("print_handler")
-logging.get_logger("foo.bar").add_handler(logging.handlers.print_handler)
+logging.get_logger().remove_logger("io_handler")
+logging.get_logger("foo.bar").add_handler(logging.handlers.io_handler)
 
 logging.get_logger("foo").debug("Hi from foo")
 logging.get_logger("foo.bar").debug("Hi from foo.bar")
@@ -149,7 +151,7 @@ local function color_formatter(record)
     )
 end
 
-logging.handlers.print_handler.formatter = color_formatter
+logging.handlers.io_handler.formatter = color_formatter
 ```
 
 
@@ -157,19 +159,23 @@ logging.handlers.print_handler.formatter = color_formatter
 ## Module level
 These functions and attributes are defined at a module level.
 
-### get_logger(name)
+### `get_logger(name)`
 Gets (or creates) the [logger object](#logger-object) with _name_.
 
-### get_level_name(level)
+### `get_level_name(level)`
 Gets the string name (upper case) for the given level.
 
-### get_default_formatter()
+### `get_default_formatter()`
 Gets the default formatter.
 
-### set_default_formatter(formatter)
+### `set_default_formatter(formatter)`
 Sets the default _formatter_. The formatter is a function taking a [record](#record-object) and returning a string.
 
 This is mainly useful to change the formatter on the library provided handlers.
+
+### `logger_name()`
+Generate a peroid-separated name based on the caller. Enables you to do `logging.get_logger(logging.logger_name())`
+to not have to insert the name manually.
 
 ## Logger Object
 You always get a logger object with `.get_logger(name)` it is safe (and the intended usage)

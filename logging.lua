@@ -96,7 +96,7 @@ end
 
 local function __default_formatter(record)
 	local lineinfo = record.pathname .. ":" .. record.lineno
-	return string.format("[%s] [%s] %s: %s", __level_to_name[record.level]:upper(), record.name, lineinfo, record.msg)
+	return string.format("%s:%s: %s: %s", logging.get_level_name(record.level):upper(), record.name, lineinfo, record.msg)
 end
 
 local function __record_factory(name, level, message)
@@ -112,6 +112,21 @@ local function __record_factory(name, level, message)
 end
 
 ----------------------------- Handlers --------------------------------------
+
+logging.handlers.io_handler = {
+	name = "io_handler",
+	level = logging.NOTSET,
+	handle = function(self, record)
+		if self.level ~= logging.NOTSET and record.level < self.level then
+			return
+		end
+
+		local formatter = self.formatter or __default_formatter
+		io.stdout:write(formatter(record), "\n")
+		io.stdout:flush()
+	end,
+}
+
 
 logging.handlers.print_handler = {
 	name = "print_handler",
@@ -291,6 +306,26 @@ function logging.get_level_name(level)
 	return __level_to_name[level]
 end
 
+
+local __name_cache = {}
+
+---Generate name a name depending on the file calling this method.
+---@return string
+function logging.logger_name()
+	local debuginfo = debug.getinfo(2, "S")
+	local current_script_path = debuginfo.short_src
+
+	if __name_cache[current_script_path] then
+		return __name_cache[current_script_path]
+	end
+	local name = string.gsub(current_script_path, "\\", ".")
+	name = string.match(name, "(.*)%..*$")
+	name = string.match(name, "%W+(.*)")
+	__name_cache[current_script_path] = name
+	return name
+end
+
+
 function logging.debug(...)
 	__root.debug(...)
 end
@@ -314,6 +349,6 @@ end
 -- Setup root logger
 __root = __logger.new("root")
 __loggers["root"] = __root
-__root:add_handler(logging.handlers.print_handler)
+__root:add_handler(logging.handlers.io_handler)
 
 return logging
