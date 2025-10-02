@@ -53,7 +53,7 @@ Running `myapp.lua` you should see
 You set the level on the logging object.
 
 > [!NOTE]
-> The library uses both the `.` and `:` annotations. `logging.get_logger` and the logging methods (`.debug`, `.info`, etc) uses `.`. Every other method uses `:`.
+> The library uses both the `.` and `:` annotations. Any methods on the module `logging` uses `.`, the logging object logging methods (`.debug`, `.info`, etc) uses `.`. Every other method uses `:`.
 
 ```lua
 local logging = require "logging"
@@ -230,7 +230,7 @@ Logs a message with level WARNING on this logger. Uses a to string method to con
 ### `error(...)`
 Logs a message with level ERROR on this logger. Uses a to string method to convert any passed arugments into a string. 
 
-#### `critical(...)`
+### `critical(...)`
 Logs a message with level CRITICAL on this logger. Uses a to string method to convert any passed arugments into a string. 
 
 ## Handler object
@@ -248,7 +248,7 @@ This can be useful if you have two handlers but only want higher level events re
 ### `handle(record)`
 Uses the formatter to format the [_record_](#record-object) and then emits it in the approriate way.
 
-### ´formatter(record)`
+### `formatter(record)`
 Takes the [_record_](#record-object) and formats it into a string.
 
 ## Record object
