@@ -8,48 +8,17 @@
 ---@class handler
 ---@field name string
 ---@field level number One of the logging levels
----@field handle fun(record: record): nil
----@field formatter? fun(record: record): string
+---@field handle fun(self: handler, record: record): nil
+---@field formatter? fun(self:handler, record: record): string
 
----@class logger
----@field debug fun(...): nil
----@field info fun(...): nil
----@field warning fun(...): nil
----@field error fun(...): nil
----@field critical fun(...): nil
----@field name string Name this logger was constructed with
----@field parent string Name of the parent logger
----@field propagate boolean If this logger should propegate to parent loggers
----@field set_level fun(name_or_level: number|string): nil
----@field get_level fun(): number
----@field add_handler fun(handler: handler): nil
----@field remove_handler fun(name: string): boolean
-
----@class logging_module
----@field NOTSET number
----@field DEBUG number
----@field INFO number
----@field WARNING number
----@field ERROR number
----@field CRITICAL number
----@field debug fun(...): nil
----@field info fun(...): nil
----@field warning fun(...): nil
----@field error fun(...): nil
----@field critical fun(...): nil
----@field get_logger fun(name?: string): logger
----@field handlers table<string, handler> Predefined handlers
----@field set_default_formatter fun(formatter: fun(record:record):string)
----@field get_default_formatter fun(): fun(record:record): string
----@field get_level_name fun(level: number): string
-
----@type logging_module
+---@class logging
 local logging = {
 	__HOMEPAGE = "https://github.com/Jerakin/logging.lua",
 	__DESCRIPTION = "Complex enough logging library.",
 	__VERSION = "0.1.0",
 }
 
+---@type table<string, handler> The library provided handlers
 logging.handlers = {}
 
 logging.NOTSET = 0
@@ -181,6 +150,18 @@ logging.handlers.file_handler = {
 }
 
 ------------------------------- Logger factory -------------------------------
+
+---@class logger
+---@field name string Name this logger was constructed with. READONLY
+---@field parent string Name of the parent logger. READONLY
+---@field propagate boolean If this logger should propegate to parent logger
+---@field handlers table<number, handler> Table of handlers. READONLY
+---@field level number A logging level. READONLY
+---@field debug fun(...): nil
+---@field info fun(...): nil
+---@field error fun(...): nil
+---@field warning fun(...): nil
+---@field critical fun(...): nil
 local __logger = {}
 __logger.__index = __logger
 
@@ -202,6 +183,7 @@ function __logger.new(name, parent)
 	return self
 end
 
+---@param record record
 function __logger:_emit(record)
 	if self.level ~= logging.NOTSET and record.level < self.level then
 		return
@@ -214,19 +196,22 @@ function __logger:_emit(record)
 	end
 end
 
+---@param name_or_level string|number Logging level, either the string representation or number. logging.DEBUG or "DEBUG".
 function __logger:set_level(name_or_level)
 	__set_logging_level(self, name_or_level)
 end
 
+---@param handler handler
 function __logger:add_handler(handler)
 	assert(handler.name ~= nil, "Handler name required")
 	assert(handler.handle ~= nil, "Handler requires a handle function")
 	table.insert(self.handlers, handler)
 end
 
-function __logger:remove_handler(name_)
+---@param name string
+function __logger:remove_handler(name)
 	for index, _handler in pairs(self.handlers) do
-		if _handler.name == name_ then
+		if _handler.name == name then
 			table.remove(self.handlers, index)
 			return true
 		end
@@ -273,7 +258,7 @@ end
 
 ------------------------------ Public Method --------------------------------
 
----@param name string Name of the logger.
+---@param name? string Name of the logger, pass nil to get the root logger.
 ---@return logger
 function logging.get_logger(name)
 	local logger = __loggers[name]
@@ -289,15 +274,19 @@ function logging.get_logger(name)
 	return __loggers[name]
 end
 
+---@param formatter fun(record: record): string
 function logging.set_default_formatter(formatter)
 	assert(type(formatter == "function"), "Formatter should be a function")
 	__default_formatter = formatter
 end
 
+---@return fun(record: record): string
 function logging.get_default_formatter()
 	return __default_formatter
 end
 
+---@param level number A logging level, such as logging.DEBUG
+---@return string
 function logging.get_level_name(level)
 	return __level_to_name[level]
 end
@@ -311,11 +300,11 @@ function logging.info(...)
 end
 
 function logging.warning(...)
-	__root.critical(...)
+	__root.warning(...)
 end
 
 function logging.error(...)
-	__root.critical(...)
+	__root.error(...)
 end
 
 function logging.critical(...)
