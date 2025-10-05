@@ -99,8 +99,8 @@ local function __default_formatter(record)
 	return string.format("%s:%s: %s: %s", logging.get_level_name(record.level):upper(), record.name, lineinfo, record.msg)
 end
 
-local function __record_factory(name, level, message)
-	local info = debug.getinfo(3, "Sl")
+local function __record_factory(name, level, message, debug_depth)
+	local info = debug.getinfo(debug_depth, "Sl")
 	local record = {
 		name = name,
 		level = level,
@@ -172,6 +172,7 @@ logging.handlers.file_handler = {
 ---@field propagate boolean If this logger should propegate to parent logger
 ---@field handlers table<number, handler> Table of handlers. READONLY
 ---@field level number A logging level. READONLY
+---@field package _debug_depth number
 ---@field debug fun(...): nil
 ---@field info fun(...): nil
 ---@field error fun(...): nil
@@ -186,11 +187,12 @@ function __logger.new(name, parent)
 	self.propagate = true
 	self.name = name
 	self.parent = parent
+	self._debug_depth = 3
 	self.handlers = {}
 	for log_name, log_level in pairs(__levels) do
 		self[log_name] = function(...)
 			local msg = __tostring(...)
-			local record = __record_factory(self.name, log_level, msg)
+			local record = __record_factory(self.name, log_level, msg, self._debug_depth)
 			self:_emit(record)
 		end
 	end
@@ -327,23 +329,33 @@ end
 
 
 function logging.debug(...)
+	__root._debug_depth = 4
 	__root.debug(...)
+	__root._debug_depth = 3
 end
 
 function logging.info(...)
+	__root._debug_depth = 4
 	__root.info(...)
+	__root._debug_depth = 3
 end
 
 function logging.warning(...)
+	__root._debug_depth = 4
 	__root.warning(...)
+	__root._debug_depth = 3
 end
 
 function logging.error(...)
+	__root._debug_depth = 4
 	__root.error(...)
+	__root._debug_depth = 3
 end
 
 function logging.critical(...)
+	__root._debug_depth = 4
 	__root.critical(...)
+	__root._debug_depth = 3
 end
 
 -- Setup root logger
