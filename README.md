@@ -164,7 +164,7 @@ they are used internally to compare if even should be emitted. However, if you p
 logging level then you can use this to see where you would want it. To have it be filtered out and not
 filtered out whenever you change the logging level.
 
-If you use [`add_level`](#add_levelnamelevel) to change these beware that if level is already taken by a different logging level
+If you use [`add_level`](#add_levelname-level) to change these beware that if level is already taken by a different logging level
 then that logging level will be overwritten. `logging.add_level("warn", 30)` will overwrite the existing `warning` level.
 This means that any existing calls to `:warning` will now throw an error.
 
