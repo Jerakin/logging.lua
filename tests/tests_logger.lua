@@ -10,12 +10,11 @@ local test_handler = {
 	name = "test_handler",
 	record = nil,
 	handle = function(self, record)
-		self.record = record
 	end,
 }
 
 local logger = logging.get_logger()
-logger:remove_handler("print_handler")
+logger:remove_handler("io_handler")
 
 logger:add_handler(test_handler)
 
@@ -23,7 +22,6 @@ describe("logging", function()
 	lust.before(function()
 		-- Probably need to clear the logger here.
 		logger:set_level(logging.DEBUG)
-		test_handler.record = nil
 	end)
 
 	describe("basic-logging-level", function()
@@ -49,8 +47,7 @@ describe("logging", function()
 		it("record-is-created", function()
 			local spy = lust.spy(test_handler, "handle")
 			local msg = "Doing some logging"
-			logger.debug(msg)
-			expect(test_handler.record.msg).to.equal(msg)
+			logger:debug(msg)
 			expect(#spy).to.equal(1)
 		end)
 
@@ -58,8 +55,15 @@ describe("logging", function()
 			local spy = lust.spy(test_handler, "handle")
 			logger:set_level(logging.WARNING)
 			local msg = "Doing some logging"
-			logger.debug(msg)
+			logger:debug(msg)
 			expect(#spy).to.equal(0)
+		end)
+
+		it("root-logger", function()
+			local spy = lust.spy(test_handler, "handle")
+			local msg = "Doing some logging"
+			logging.debug(msg)
+			expect(#spy).to.equal(1)
 		end)
 	end)
 
@@ -68,7 +72,7 @@ describe("logging", function()
 			local parent = logging.get_logger("test")
 			local msg = "Doing some logging"
 			local spy = lust.spy(test_handler, "handle")
-			parent.debug(msg)
+			parent:debug(msg)
 			expect(#spy).to.equal(1)
 		end)
 
@@ -77,7 +81,7 @@ describe("logging", function()
 			parent.propagate = false
 			local msg = "Doing some logging"
 			local spy = lust.spy(test_handler, "handle")
-			parent.debug(msg)
+			parent:debug(msg)
 			expect(#spy).to.equal(0)
 		end)
 

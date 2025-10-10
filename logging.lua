@@ -173,31 +173,31 @@ logging.handlers.file_handler = {
 ---@field handlers table<number, handler> Table of handlers. READONLY
 ---@field level number A logging level. READONLY
 ---@field package _debug_depth number
----@field debug fun(...): nil
----@field info fun(...): nil
----@field error fun(...): nil
----@field warning fun(...): nil
----@field critical fun(...): nil
+---@field debug fun(self, ...): nil
+---@field info fun(self, ...): nil
+---@field error fun(self, ...): nil
+---@field warning fun(self, ...): nil
+---@field critical fun(self, ...): nil
 local __logger = {}
 __logger.__index = __logger
 
 function __logger.new(name, parent)
-	local self = setmetatable({}, __logger)
-	self.level = logging.NOTSET
-	self.propagate = true
-	self.name = name
-	self.parent = parent
-	self._debug_depth = 3
-	self.handlers = {}
+	local logger = setmetatable({}, __logger)
+	logger.level = logging.NOTSET
+	logger.propagate = true
+	logger.name = name
+	logger.parent = parent
+	logger._debug_depth = 3
+	logger.handlers = {}
 	for log_name, log_level in pairs(__levels) do
-		self[log_name] = function(...)
+		logger[log_name] = function(self, ...)
 			local msg = __tostring(...)
-			local record = __record_factory(self.name, log_level, msg, self._debug_depth)
-			self:_emit(record)
+			local record = __record_factory(logger.name, log_level, msg, logger._debug_depth)
+			logger:_emit(record)
 		end
 	end
 
-	return self
+	return logger
 end
 
 ---@param record record
@@ -308,7 +308,6 @@ function logging.get_level_name(level)
 	return __level_to_name[level]
 end
 
-
 local __name_cache = {}
 
 ---Generate name a name depending on the file calling this method.
@@ -330,31 +329,31 @@ end
 
 function logging.debug(...)
 	__root._debug_depth = 4
-	__root.debug(...)
+	__root:debug(...)
 	__root._debug_depth = 3
 end
 
 function logging.info(...)
 	__root._debug_depth = 4
-	__root.info(...)
+	__root:info(...)
 	__root._debug_depth = 3
 end
 
 function logging.warning(...)
 	__root._debug_depth = 4
-	__root.warning(...)
+	__root:warning(...)
 	__root._debug_depth = 3
 end
 
 function logging.error(...)
 	__root._debug_depth = 4
-	__root.error(...)
+	__root:error(...)
 	__root._debug_depth = 3
 end
 
 function logging.critical(...)
 	__root._debug_depth = 4
-	__root.critical(...)
+	__root:critical(...)
 	__root._debug_depth = 3
 end
 

@@ -15,9 +15,9 @@ local logging = require "logging"
 
 local logger = logging.get_logger("myapp.mymodule")
 
-logger.debug("Start")
+logger:debug("Start")
 mymodule.my_fun()
-logger.debug("Stop")
+logger:debug("Stop")
 ```
 ```lua
 -- myapp.mymodule.lua
@@ -27,7 +27,7 @@ local logger = logging.get_logger("myapp.mymodule")
 local M = {}
 
 function M.my_fun()
-    logger.debug("Some event")
+    logger:debug("Some event")
 end
 
 return M
@@ -53,7 +53,8 @@ Running `myapp.lua` you should see
 You set the level on the logging object.
 
 > [!NOTE]
-> The library uses both the `.` and `:` annotations. Any methods on the module `logging` uses `.`, the logging object logging methods (`.debug`, `.info`, etc) uses `.`. Every other method uses `:`.
+> The library uses both the `.` and `:` annotations. Any methods on the module `logging` uses `.` (this includes the discouraged logging event methods),
+any other method is expected to be called through the `:` annotation.
 
 ```lua
 local logging = require "logging"
@@ -62,7 +63,7 @@ local logger = logging.get_logger("mymodule")
 
 logger:set_level(logging.INFO)
 
-logger.debug("Something went wrong")
+logger:debug("Something went wrong")
 -- As debug is of a lower level than info, this will not print anything.
 ```
 
@@ -78,7 +79,7 @@ logging.get_logger("lib.module"):set_level(logging.INFO)
 
 local logger = logging.get_logger("lib.module.file")
 
-logger.debug("Something went wrong")
+logger:debug("Something went wrong")
 -- As a parent logger has a higher level (INFO) than this child logger is using (DEBUG) this will not print anything.
 ```
 
@@ -104,9 +105,9 @@ local logging = require "logging"
 logging.get_logger().remove_logger("io_handler")
 logging.get_logger("foo.bar").add_handler(logging.handlers.io_handler)
 
-logging.get_logger("foo").debug("Hi from foo")
-logging.get_logger("foo.bar").debug("Hi from foo.bar")
-logging.get_logger("foo.bar.baz").debug("Hi from foo.bar.baz")
+logging.get_logger("foo"):debug("Hi from foo")
+logging.get_logger("foo.bar"):debug("Hi from foo.bar")
+logging.get_logger("foo.bar.baz"):debug("Hi from foo.bar.baz")
 
 ```
 Would print `Hi from foo.bar` and `Hi from foo.bar.baz` but as `foo` is the parent logger to `foo.bar` which has the handler. The debug statement from `foo` would not be printed.
