@@ -157,28 +157,6 @@ logging.handlers.io_handler.formatter = color_formatter
 
 
 # Specifics
-## Logging levels
-
-These are the numeric values of each logging level. Normally you do not have to care about these,
-they are used internally to compare if even should be emitted. However, if you plan to add your own
-logging level then you can use this to see where you would want it. To have it be filtered out and not
-filtered out whenever you change the logging level.
-
-If you use [`add_level`](#add_levelname-level) to change these beware that if level is already taken by a different logging level
-then that logging level will be overwritten. `logging.add_level("warn", 30)` will overwrite the existing `warning` level.
-This means that any existing calls to `:warning` will now throw an error.
-
-|name|level|comment|
-|---|---|---|
-|NOTSET|0|Used to determin if a logging level is not set. Usually can be ignored by a user, but can be used on a handler to log all events.|
-|DEBUG| 10 ||
-|INFO| 20 ||
-|WARNING| 30 ||
-|ERROR| 40 ||
-|CRITICAL| 50 ||
-
-
-
 ## Module level
 These functions and attributes are defined at a module level.
 
@@ -298,3 +276,22 @@ The line number in the file causing the log event.
 
 ### `msg`
 The supplied message.
+
+## Logging levels
+These are the numeric values of each logging level. Normally you do not have to care about these,
+they are used internally to compare if even should be emitted. However, if you plan to add your own
+logging level then you can use this to see where you would want it. To have it be filtered out and not
+filtered out whenever you change the logging level.
+
+If you use [`add_level`](#add_levelname-level) to change these beware that if level is already taken by a different logging level
+then that logging level will be overwritten. `logging.add_level("warn", 30)` will overwrite the existing `warning` level.
+This means that any existing calls to `:warning` will now throw an error.
+
+|name|level|comment|
+|---|---|---|
+|NOTSET|0|Used to determin if a logging level is not set. Usually can be ignored by a user, but can be used on a handler to log all events.|
+|DEBUG| 10 ||
+|INFO| 20 ||
+|WARNING| 30 ||
+|ERROR| 40 ||
+|CRITICAL| 50 ||
