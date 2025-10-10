@@ -326,6 +326,35 @@ function logging.logger_name()
 	return name
 end
 
+---@param name string Name for the logging level.
+---@param level number The level to associate this name with. Should be unique. If a level with this number already exists it will be over written.
+function logging.add_level(name, level)
+	local _remove_logger = nil
+	if __level_to_name[level] ~= nil then
+		-- Remove shadowed logging level
+		local n = __level_to_name[level]
+		__levels[n] = nil
+		logging[n] = nil
+		_remove_logger = n
+	end
+
+	-- Add new logging level
+	logging[name:upper()] = level
+	__levels[name:lower()] = logging[name:upper()]
+	__level_to_name[level] = name
+
+	for log_name, logger in pairs(__loggers) do
+		if _remove_logger ~= nil then
+			-- Remove shadowed logging level
+			logger[_remove_logger] = nil
+		end
+		logger[name:lower()] = function(self, ...)
+			local msg = __tostring(...)
+			local record = __record_factory(logger.name, level, msg, logger._debug_depth)
+			logger:_emit(record)
+		end
+	end
+end
 
 function logging.debug(...)
 	__root._debug_depth = 4
