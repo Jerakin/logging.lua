@@ -15,7 +15,7 @@
 local logging = {
 	__HOMEPAGE = "https://github.com/Jerakin/logging.lua",
 	__DESCRIPTION = "Complex enough logging library.",
-	__VERSION = "0.1.0",
+	__VERSION = "0.2.0",
 }
 
 ---@type table<string, handler> The library provided handlers
