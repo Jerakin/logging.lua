@@ -3,7 +3,15 @@
 
 
 # Installation
-Drop the [logging.lua](logging.lua) file into your project.
+Drop the [logging.lua](logging/logging.lua) file into your project.
+
+### Defold
+You can use logging.lua in your own project by adding this project as a Defold library dependency. Open your game.project file and in the dependencies field under project add:
+
+```
+https://github.com/Jerakin/logging.lua/archive/main.zip
+```
+
 
 # Usage
 The library is focused on (hierarchial) named loggers. To get started you need to get a logger passsing in a name. The name should be a dot separated string. A good rule of thumb is that the name should be set to the same name the file would normally be required with.
